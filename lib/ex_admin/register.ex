@@ -103,6 +103,7 @@ defmodule ExAdmin.Register do
 
       Module.register_attribute __MODULE__, :query, accumulate: false, persist: true
       Module.register_attribute __MODULE__, :index_filters, accumulate: true, persist: true
+      Module.register_attribute __MODULE__, :index_filter_values, accumulate: false, persist: true
       Module.register_attribute __MODULE__, :batch_actions, accumulate: true, persist: true
       Module.register_attribute __MODULE__, :selectable_column, accumulate: false, persist: true
       Module.register_attribute(__MODULE__, :form_items, accumulate: true, persist: true)
@@ -201,6 +202,7 @@ defmodule ExAdmin.Register do
                 collection_actions: Module.get_attribute(__MODULE__, :collection_actions),
                 controller_filters: controller_filters,
                 index_filters: Module.get_attribute(__MODULE__, :index_filters),
+                index_filter_values: Module.get_attribute(__MODULE__, :index_filter_values),
                 selectable_column: Module.get_attribute(__MODULE__, :selectable_column),
                 position_column: Module.get_attribute(__MODULE__, :position_column),
                 name_column: @name_column,
@@ -1026,6 +1028,12 @@ defmodule ExAdmin.Register do
   defmacro filter(field, opts \\ quote(do: [])) do
     quote do
       Module.put_attribute __MODULE__, :index_filters, {unquote(field), unquote(opts)}
+    end
+  end
+
+  defmacro filter_values(values_list) do
+    quote do
+      Module.put_attribute __MODULE__, :index_filter_values, unquote(values_list)
     end
   end
 

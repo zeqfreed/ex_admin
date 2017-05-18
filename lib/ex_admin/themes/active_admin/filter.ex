@@ -17,7 +17,7 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
             if scope do
               input type: :hidden, name: :scope, value: scope
             end
-            for field <- fields(defn), do: build_field(field, q, defn)
+            for field <- fields(defn), do: build_field_with_values(field, q, defn)
             for field <- associations(defn), do: build_field(field, q, defn)
             div ".buttons" do
               input name: "commit", type: "submit", value: (gettext "Filter")
@@ -31,6 +31,40 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
     end
 
   end
+
+  def build_field_with_values({name, type}, q, %{index_filter_values: %{} = values} = defn) do
+    if !Map.has_key?(values, name) do
+      build_field({name, type}, q, defn)
+    else
+      name_label = field_label(name, defn)
+      {:ok, values} = Map.fetch(values, name)
+      values = prepare_field_values(values)
+      selected_key = case q["#{name}_equals"] do
+        nil -> nil
+        val -> val
+      end
+
+      div ".filter_form_field.filter_string" do
+        label ".label #{name_label}", for: "#{name}_string"
+        select "#{name}", [name: "q[#{name}_equals]"] do
+          option "Any", [{:value, ""}]
+          for {option_value, option_label} <- values do
+            selected = if "#{option_value}" == selected_key, do: [selected: :selected], else: []
+            option option_label, [{:value, "#{option_value}"} | selected]
+          end
+        end
+      end
+    end
+  end
+
+  def build_field_with_values(field, q, defn), do: build_field(field, q, defn)
+
+  defp prepare_field_values(values) do
+    Enum.map(values, &prepare_field_value/1)
+  end
+
+  defp prepare_field_value({_, _} = value), do: value
+  defp prepare_field_value(value), do: {value, ExAdmin.Utils.humanize(value)}
 
   def build_field({name, :string}, q, defn) do
     name_label = field_label(name, defn)
@@ -62,16 +96,10 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
   def build_field({name, num}, q, defn) when num in [:integer, :id, :decimal, :float] do
     unless check_and_build_association(name, q, defn) do
       name_label = field_label(name, defn)
-      selected_name = integer_selected_name(name, q)
       value = get_integer_value name, q
-      div ".filter_form_field.filter_numeric" do
-        label ".label #{name_label}", for: "#{name}_numeric"
-        select onchange: ~s|document.getElementById("#{name}_numeric").name="q[" + this.value + "]";| do
-          for {suffix, text} <- integer_options() do
-            build_option(text, "#{name}_#{suffix}", selected_name)
-          end
-        end
-        input id: "#{name}_numeric", name: "q[#{selected_name}]", size: "10", type: "text", value: value
+      div ".filter_form_field.filter_select" do
+        label ".label #{name_label}", for: "q_#{name}"
+        input "##{name}", [name: "q[#{name}_eq]", value: value]
       end
     end
   end

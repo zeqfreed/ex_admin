@@ -54,7 +54,7 @@ defmodule ExAdmin.Mixfile do
       {:exactor, "~> 2.2.0"},
       {:ex_doc, "~> 0.11", only: :dev},
       {:earmark, "~> 0.1", only: :dev},
-      {:ex_queb, "~> 1.0"},
+      {:ex_queb, "~> 1.0", github: 'myasoedov/ex_queb', ref: 'af692a469d34670a1e5d0fc311883f1fe1894b34'},
       {:excoveralls, "~> 0.5", only: :test},
       {:gettext, "~> 0.11"},
       {:hound, "~> 1.0", only: :test}

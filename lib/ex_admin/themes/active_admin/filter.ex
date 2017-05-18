@@ -118,24 +118,11 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
 
   def build_field({name, Ecto.UUID}, q, defn) do
     name_label = field_label(name, defn)
-    repo = Application.get_env :ex_admin, :repo
-    ids = repo.all(defn.resource_model)
-    |> Enum.map(&(Map.get(&1, name)))
-
-    selected_key = case q["#{name}_eq"] do
-      nil -> nil
-      val -> val
-    end
+    value = get_string_value name, q
 
     div ".filter_form_field.filter_select" do
       label ".label #{name_label}", for: "q_#{name}"
-      select "##{name}", [name: "q[#{name}_eq]"] do
-        option "Any", value: ""
-        for id <- ids do
-          selected = if "#{id}" == selected_key, do: [selected: :selected], else: []
-          option id, [{:value, "#{id}"} | selected]
-        end
-      end
+      input "##{name}", [name: "q[#{name}_uuideq]", value: value]
     end
   end
 

@@ -13,7 +13,7 @@ defmodule ExAdmin.AdminResourceController do
         id = params |> Map.to_list
         query = model.run_query(repo(), defn, :index, id)
         Authorization.authorize_query(conn.assigns.resource, conn, query, :index, id)
-        |> ExAdmin.Query.execute_query(repo(), :index, id)
+        |> ExAdmin.Query.execute_query(repo(), :index, id, defn)
 
       page ->
         page

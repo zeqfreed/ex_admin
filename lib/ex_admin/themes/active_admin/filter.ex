@@ -104,6 +104,18 @@ defmodule ExAdmin.Theme.ActiveAdmin.Filter do
     end
   end
 
+  def build_field({name, :scope}, q, defn) do
+    unless check_and_build_association(name, q, defn) do
+      name_label = field_label(name, defn)
+      value = get_value("#{name}_scope", q)
+      div ".filter_form_field.filter_select" do
+        label ".label #{name_label}", for: "q_#{name}"
+        input "##{name}", [name: "q[#{name}_scope]", value: value]
+      end
+    end
+  end
+
+
   def build_field({name, %Ecto.Association.BelongsTo{related: assoc, owner_key: owner_key}}, q, defn) do
     id = "q_#{owner_key}"
     name_label = field_label(name, defn)

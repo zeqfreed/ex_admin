@@ -19,8 +19,8 @@ defmodule ExAdmin.Query do
     |> build_query(query_opts, action, id, defn)
   end
 
-  def execute_query(query, repo, action, id) do
-    paginate(query, repo, action, id)
+  def execute_query(query, repo, action, id, defn \\ %{}) do
+    paginate(query, repo, action, id, defn)
   end
 
   @doc false
@@ -28,10 +28,19 @@ defmodule ExAdmin.Query do
     for {name, _opts} <- defn.scopes do
       resource_model
       |> scope_where(defn.scopes, name)
-      |> ExQueb.filter(params)
+      |> ExQueb.filter(params, %{scopes: prepare_scopes(defn)})
       |> count_q(repo, name)
     end
   end
+
+  @doc false
+  def prepare_scopes(%{index_filter_scopes: nil}), do: nil
+  def prepare_scopes(%{index_filter_scopes: scopes}) do
+    Enum.map(scopes, fn ({name, proc}) ->
+      {name, proc}
+    end)
+  end
+  def prepare_scopes(_), do: nil
 
   @doc false
   def count([]), do: 0
@@ -40,18 +49,18 @@ defmodule ExAdmin.Query do
     hd(resources).__struct__ |> select([r], count r.id) |> repo.one!
   end
 
-  defp paginate(query, repo, :index, params) do
+  defp paginate(query, repo, :index, params, defn) do
     query
-    |> filter(params)
+    |> filter(params, %{scopes: prepare_scopes(defn)})
     |> repo.paginate(params)
   end
-  defp paginate(query, repo, :csv, params) do
+  defp paginate(query, repo, :csv, params, _) do
     apply repo, get_method(:csv), [query |> filter(params)]
   end
-  defp paginate(query, repo, :nested, _params) do
+  defp paginate(query, repo, :nested, _params, _) do
     apply repo, get_method(:nested), [query]
   end
-  defp paginate(query, repo, action, _) do
+  defp paginate(query, repo, action, _, _) do
     apply repo, get_method(action), [query]
   end
 

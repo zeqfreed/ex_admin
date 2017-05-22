@@ -9,7 +9,7 @@ defmodule ExAdmin.Filter do
   use Xain
 
   @integer_options [eq: (gettext "Equal To"), gt: (gettext "Greater Than"), lt: (gettext "Less Than") ]
-  @string_options [contains: (gettext "Contains"), equals: (gettext "Equals"), begins_with: (gettext "Starts With"), ends_with: (gettext "End With")]
+  @string_options [contains: (gettext "Contains"), equals: (gettext "Equals"), beginswith: (gettext "Starts With"), endswith: (gettext "End With")]
 
   def integer_options, do: @integer_options
   def string_options, do: @string_options
@@ -24,7 +24,7 @@ defmodule ExAdmin.Filter do
   end
 
   def fields(%{index_filters: false}), do: []
-  def fields(%{index_filters: filters} = defn) do
+  def fields(%{index_filters: filters, index_filter_scopes: scopes} = defn) do
     # Either take the filters given by the user, or use the schema's fields.
     # Parse the filters and only return the applicable fields.
     filters =
@@ -43,8 +43,16 @@ defmodule ExAdmin.Filter do
     # Convert the filters to a tuple representing the field name
     # and type.
     Enum.map filters, fn(field) ->
-      {field, field_type(defn.resource_model, field)}
+      case has_scope?(scopes, field) do
+      true -> {field, :scope}
+      _ -> {field, field_type(defn.resource_model, field)}
+      end
     end
+  end
+
+  defp has_scope?(nil, _), do: false
+  defp has_scope?(scopes, field) do
+    Enum.any?(scopes, &elem(&1, 0) == field)
   end
 
   def field_type(model, field) do

@@ -104,7 +104,7 @@ defmodule ExAdmin.Register do
       Module.register_attribute __MODULE__, :query, accumulate: false, persist: true
       Module.register_attribute __MODULE__, :index_filters, accumulate: true, persist: true
       Module.register_attribute __MODULE__, :index_filter_values, accumulate: false, persist: true
-      Module.register_attribute __MODULE__, :index_filter_scopes, accumolate: false, persist: true
+      Module.register_attribute __MODULE__, :index_filter_scopes, accumulate: false, persist: true
       Module.register_attribute __MODULE__, :batch_actions, accumulate: true, persist: true
       Module.register_attribute __MODULE__, :selectable_column, accumulate: false, persist: true
       Module.register_attribute(__MODULE__, :form_items, accumulate: true, persist: true)

@@ -793,14 +793,21 @@ defmodule ExAdmin.Form do
     errors = get_errors(errors, field_name)
     label = get_label(field_name, opts)
     required = if field_name in (conn.assigns[:ea_required] || []), do: true, else: false
-    {html, _id} = wrap_item(resource, field_name, model_name, label, errors, opts, conn.params, required, fn(ext_name) ->
-      field_type = opts[:type] || field_type(resource, field_name)
-      [
-        build_control(field_type, resource, opts, model_name, field_name, ext_name),
-        build_errors(errors, opts[:hint])
-      ]
-    end)
-    html
+
+    case opts[:type] || field_type(resource, field_name) do
+      {:embed, _} = field_type ->
+        build_control(field_type, resource, opts, model_name, field_name, nil)
+        |> Enum.join("\n")
+      field_type ->
+        {html, _id} = wrap_item(resource, field_name, model_name, label, errors, opts, conn.params, required, fn(ext_name) ->
+          field_type = opts[:type] || field_type(resource, field_name)
+          [
+            build_control(field_type, resource, opts, model_name, field_name, ext_name),
+            build_errors(errors, opts[:hint])
+          ]
+        end)
+        html
+    end
   end
 
   def build_item(conn, %{type: :has_many, resource: _resource, name: field_name,
@@ -1067,14 +1074,16 @@ defmodule ExAdmin.Form do
     embed_module.__schema__(:fields)
     |> Enum.map(& {&1, embed_module.__schema__(:type, &1)})
     |> Enum.map(fn {field, type} ->
-      [ label(Atom.to_string(field)),
+      {html, _id} = wrap_item(resource, field, model_name, field, nil, %{}, %{}, true, fn(ext_name) ->
         build_control(type,
           embed_content,
           %{},
           "#{model_name}[#{field_name}]",
           field,
           "#{ext_name}_#{field}")
-      ]
+       end)
+
+      html
     end)
   end
 

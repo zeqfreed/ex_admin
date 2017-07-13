@@ -788,15 +788,41 @@ defmodule ExAdmin.Form do
   end
 
   def build_item(conn, %{type: :input, resource: _resource, name: field_name, opts: opts},
-       resource, model_name, errors) do
+       resource, model_name, err) do
     Adminlog.debug "build_item 7: #{inspect field_name}"
-    errors = get_errors(errors, field_name)
+    errors = get_errors(err, field_name)
     label = get_label(field_name, opts)
     required = if field_name in (conn.assigns[:ea_required] || []), do: true, else: false
 
     case opts[:type] || field_type(resource, field_name) do
-      {:embed, _} = field_type ->
-        build_control(field_type, resource, opts, model_name, field_name, nil)
+      {:embed, e} = field_type ->
+        embed_content = Map.get(resource, field_name) || e.related.__struct__
+        embed_module = e.related
+
+        embed_module.__schema__(:fields)
+        |> Enum.map(& {&1, embed_module.__schema__(:type, &1)})
+        |> Enum.map(fn {field, type} ->
+          schema_type = get_in(opts, [:schema, field])
+          if schema_type, do: type = schema_type
+          {html, _id} = wrap_item(resource, field, model_name, field, nil, %{}, %{}, true, fn(ext_name) ->
+            control_html = build_control(
+              type,
+              embed_content,
+              %{},
+              "#{model_name}[#{field_name}]",
+              field,
+              "#{ext_name}_#{field}"
+            )
+
+            errors_html = get_errors(err, String.to_atom("#{field_name}_#{field}"))
+                          |> build_errors(opts[:hint])
+
+
+            "#{control_html}#{errors_html}"
+          end)
+
+          html
+        end)
         |> Enum.join("\n")
       field_type ->
         {html, _id} = wrap_item(resource, field_name, model_name, label, errors, opts, conn.params, required, fn(ext_name) ->
@@ -1067,24 +1093,16 @@ defmodule ExAdmin.Form do
     |> build_array_control_block
   end
 
-  def build_control({:embed, e}, resource, opts, model_name, field_name, ext_name) do
-    embed_content = Map.get(resource, field_name) || e.related.__struct__
-    embed_module = e.related
-
-    embed_module.__schema__(:fields)
-    |> Enum.map(& {&1, embed_module.__schema__(:type, &1)})
-    |> Enum.map(fn {field, type} ->
-      {html, _id} = wrap_item(resource, field, model_name, field, nil, %{}, %{}, true, fn(ext_name) ->
-        build_control(type,
-          embed_content,
-          %{},
-          "#{model_name}[#{field_name}]",
-          field,
-          "#{ext_name}_#{field}")
-       end)
-
-      html
-    end)
+  def build_control(:text, resource, opts, model_name, field_name, ext_name) do
+    value = Map.get(resource, field_name, "") |> ExAdmin.Render.to_string
+    Map.put_new(opts, :class, "form-control")
+    |> Map.put_new(:name, "#{model_name}[#{field_name}]")
+    |> Map.put_new(:id, ext_name)
+    |> Map.put_new(:rows, 3)
+    |> Map.put_new(:value, value |> escape_value)
+    |> Map.delete(:display)
+    |> Map.to_list
+    |> Xain.textarea
   end
 
   def build_control(type, resource, opts, model_name, field_name, ext_name) do

@@ -19,7 +19,7 @@ defprotocol ExAdmin.Authorization do
   def authorize_action(resource, conn, action)
 end
 
-defimpl ExAdmin.Authorization, for: Any do
-  def authorize_query(_, _, query, _, _), do: query
-  def authorize_action(_, _, _), do: true
-end
+# defimpl ExAdmin.Authorization, for: Any do
+#   def authorize_query(_, _, query, _, _), do: query
+#   def authorize_action(_, _, _), do: true
+# end

@@ -34,7 +34,7 @@
         <div id="active_admin_content" class="<%= klass %>">
           <div id="main_content_wrapper">
             <div id="main_content">
-              <%= render @view_module, @view_template, assigns %>
+              <%= @inner_content %>
             </div>
           </div>
           <%= if sidebars? do %>

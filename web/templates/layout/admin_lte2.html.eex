@@ -50,7 +50,7 @@
           <div class="row">
             <div class="col-lg-<%= main_width %>">
               <%= ExAdmin.AdminLte2.LayoutView.flashes(@conn) %>
-              <%= render @view_module, @view_template, assigns %>
+              <%= @inner_content %>
             </div>
             <%= if sidebars? do %>
               <div class="col-lg-3 sidebar_section">
